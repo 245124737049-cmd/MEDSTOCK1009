@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEDSTOCK | Pharmacy Management</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <div id="setupScreen" class="setup-wrap">
+    <div class="setup-card">
+      <div class="brand-mark">✚</div><p class="eyebrow">SMART PHARMACY MANAGEMENT</p>
+      <h1>Welcome to <span>MEDSTOCK</span></h1>
+      <p class="muted">Enter your pharmacy name and choose your home-delivery setting.</p>
+      <form id="setupForm">
+        <div class="field"><label for="setupPharmacyName">Pharmacy name</label><input id="setupPharmacyName" placeholder="e.g. Apollo Pharmacy" maxlength="80" required></div>
+        <label>Do you provide home delivery?</label>
+        <div class="choice-row">
+          <label class="choice"><input type="radio" name="delivery" value="yes" checked> Yes, we deliver</label>
+          <label class="choice"><input type="radio" name="delivery" value="no"> No delivery</label>
+        </div>
+        <button class="primary full" type="submit">Continue to MEDSTOCK →</button>
+      </form>
+      <p class="tiny">Your workspace syncs to the cloud without asking for an email or password.</p>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside class="sidebar">
+      <div class="side-brand"><span class="brand-mark small">✚</span><div><b>MEDSTOCK</b><small>PHARMACY OS</small></div></div>
+      <div class="pharmacy-chip"><span class="dot"></span><div><b id="sidePharmacy">Pharmacy</b><small id="sideDelivery">Delivery enabled</small></div></div>
+      <nav>
+        <button class="nav active" data-page="overview">▦ <span>Overview</span></button>
+        <button class="nav" data-page="inventory">▤ <span>Medicine inventory</span></button>
+        <button class="nav" data-page="billing">▧ <span>Billing & invoices</span></button>
+        <button class="nav" data-page="suppliers">⇄ <span>Supplier comparison</span></button>
+        <button class="nav" data-page="customers">♙ <span>Customers & delivery</span></button>
+        <button class="nav" data-page="medicine">✚ <span>Medicine information</span></button>
+        <button class="nav" data-page="reports">▥ <span>Reports & insights</span></button>
+      </nav>
+      <div class="side-bottom"><div class="secure">● Supabase cloud workspace</div><button id="switchPharmacy" class="text-btn">Home delivery settings</button></div>
+    </aside>
+    <main class="main">
+      <header class="topbar"><div><p class="eyebrow" id="dateLabel">PHARMACY WORKSPACE</p><h2 id="pageTitle">Overview</h2></div><div class="top-actions"><span class="live-pill">● Workspace ready</span><div class="avatar">P</div></div></header>
+      <section id="overviewPage" class="page">
+        <div class="welcome"><div><p class="eyebrow light">YOUR PHARMACY, AT A GLANCE</p><h1>Welcome to <span id="welcomeName">your pharmacy</span></h1><p>Keep stock, sales and daily operations organised in one place.</p></div><div class="welcome-icon">✚</div></div>
+        <div class="stats">
+          <div class="stat"><span>Total medicines</span><b id="statMedicines">0</b><small>Items in inventory</small></div>
+          <div class="stat"><span>Low stock alerts</span><b id="statLow">0</b><small>At or below reorder level</small></div>
+          <div class="stat"><span>Expiring soon</span><b id="statExpiry">0</b><small>Within the next 90 days</small></div>
+          <div class="stat"><span>Today's sales</span><b id="statSales">₹0.00</b><small>Completed invoices</small></div>
+        </div>
+        <div class="grid-two">
+          <div class="panel"><div class="panel-head"><div><h3>Expiry watch</h3><p>Medicines that need attention</p></div><button class="link-btn" data-go="inventory">View inventory →</button></div><div id="expiryList" class="empty">No expiry alerts yet.</div></div>
+          <div class="panel"><div class="panel-head"><div><h3>Quick actions</h3><p>Common pharmacy tasks</p></div></div><div class="quick-grid"><button data-go="inventory">＋<b>Add medicine</b><small>Update your stock</small></button><button data-go="billing">▧<b>Create bill</b><small>Generate an invoice</small></button><button data-go="suppliers">⇄<b>Compare suppliers</b><small>Review purchase offers</small></button><button data-go="customers">♙<b>New customer</b><small>Save customer details</small></button></div></div>
+        </div>
+        <div class="panel"><div class="panel-head"><div><h3>Recent invoices</h3><p>Your latest billing activity</p></div><button class="link-btn" data-go="billing">Open billing →</button></div><div id="recentBills" class="empty">No invoices created yet.</div></div>
+      </section>
+
+      <section id="inventoryPage" class="page hidden">
+        <div class="section-intro"><div><h3>Medicine inventory</h3><p>Add stock, track batch expiry and monitor reorder levels.</p></div><div><button class="outline" id="backupData">Backup data</button> <button class="primary" id="addMedicineBtn">＋ Add medicine</button></div></div>
+        <div class="toolbar"><input id="inventorySearch" placeholder="Search medicine, batch or supplier…"><select id="stockFilter"><option value="all">All stock</option><option value="low">Low stock</option><option value="expired">Expired</option><option value="soon">Expiring in 90 days</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>Medicine / batch</th><th>Category</th><th>Stock</th><th>Expiry date</th><th>Purchase / sale</th><th>Supplier</th><th>Action</th></tr></thead><tbody id="inventoryRows"></tbody></table></div>
+        <div class="note">Expiry alerts are based on the dates you enter. Always physically verify batch details before dispensing.</div>
+      </section>
+
+      <section id="billingPage" class="page hidden">
+        <div class="section-intro"><div><h3>Billing & invoices</h3><p>Enter the pharmacy name to print on this bill.</p></div><button class="outline" id="printLast">Print last invoice</button></div>
+        <div class="billing-layout"><div class="panel"><h3>New invoice</h3><div class="form-grid"><div class="field"><label>Pharmacy name (printed on bill) *</label><input id="billPharmacy" placeholder="e.g. Apollo Pharmacy" required maxlength="80"></div><div class="field"><label>Customer name</label><input id="billCustomer" placeholder="Customer name"></div><div class="field"><label>Phone number</label><input id="billPhone" placeholder="Mobile number"></div></div><div class="field"><label>Select medicine</label><select id="billMedicine"></select></div><div class="form-grid"><div class="field"><label>Quantity</label><input id="billQty" type="number" min="1" value="1"></div><div class="field align-end"><button class="primary" id="addToCart">Add to bill</button></div></div><div id="cartRows" class="cart-list empty">Your bill is empty.</div><div class="total-line"><span>Subtotal</span><b id="billTotal">₹0.00</b></div><button class="primary full" id="generateBill">Generate invoice</button></div><div class="panel invoice-preview" id="invoicePreview"><div class="invoice-placeholder">▧<h3>Invoice preview</h3><p>The pharmacy name entered on the setup page and bill details will appear here.</p></div></div></div>
+        <div class="panel"><div class="panel-head"><div><h3>Invoice history</h3><p>Saved bills for this browser</p></div></div><div id="billHistory" class="empty">No bills yet.</div></div>
+      </section>
+
+      <section id="suppliersPage" class="page hidden">
+        <div class="section-intro"><div><h3>Supplier comparison</h3><p>Compare prices, delivery timelines and reliability before purchasing.</p></div><button class="primary" id="addSupplierBtn">＋ Add supplier quote</button></div>
+        <div class="note">Enter quotes received from your distributors. The score is a simple decision aid, not a guarantee of supplier quality.</div>
+        <div id="supplierCards" class="supplier-grid"></div>
+      </section>
+
+      <section id="customersPage" class="page hidden">
+        <div class="section-intro"><div><h3>Customers & home delivery</h3><p>Maintain customer contacts and track delivery requests.</p></div><button class="primary" id="addCustomerBtn">＋ Add customer</button></div>
+        <div id="deliveryDisabled" class="note hidden">Home delivery is switched off in your pharmacy setup. You can enable it by switching pharmacy settings.</div>
+        <div id="deliveryFeatures">
+          <div class="delivery-tools panel"><div><h3>Delivery desk</h3><p>Track each order and open its address in Google Maps for navigation.</p></div><div class="delivery-summary" id="deliverySummary">0 active deliveries</div></div>
+          <div class="table-wrap"><table><thead><tr><th>Customer</th><th>Phone</th><th>Address</th><th>Delivery status</th><th>Action</th></tr></thead><tbody id="customerRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="medicinePage" class="page hidden">
+        <div class="section-intro"><div><h3>Medicine information centre</h3><p>Search common medicine notes, add your own verified entries, or open a web search for an unfamiliar tablet.</p></div></div>
+        <div class="warning"><b>Important safety notice</b><p>This is not a prescribing tool. Dosage depends on the exact product, strength, age, condition, kidney/liver function and other medicines. Never use this page to decide a patient's dose or replace a doctor's prescription.</p></div>
+        <div class="toolbar"><input id="referenceSearch" placeholder="Type any tablet / medicine name…"><button class="outline" id="addReferenceBtn">＋ Add medicine information</button><button class="outline" id="webReferenceSearch">Search web ↗</button></div><div id="referenceStatus" class="note">Search the built-in reference. For medicines not listed, use Search web or add verified details from the medicine pack / trusted source.</div><div id="referenceCards" class="reference-grid"></div>
+      </section>
+
+      <section id="reportsPage" class="page hidden">
+        <div class="section-intro"><div><h3>Reports & insights</h3><p>A quick view of sales, stock value and inventory health.</p></div><button class="outline" id="exportData">↓ Export data (CSV)</button></div>
+        <div class="stats"><div class="stat"><span>Inventory sale value</span><b id="reportStockValue">₹0</b><small>Current quantity × sale price</small></div><div class="stat"><span>Invoices created</span><b id="reportInvoices">0</b><small>All saved invoices</small></div><div class="stat"><span>Units in stock</span><b id="reportUnits">0</b><small>Across all medicines</small></div><div class="stat"><span>Customers</span><b id="reportCustomers">0</b><small>Saved customer records</small></div></div>
+        <div class="panel"><h3>Stock health</h3><div id="stockHealth" class="health-bars"></div></div>
+        <div class="panel"><h3>Recent sales</h3><div id="salesReport" class="empty">No sales data yet.</div></div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="medicineModal"><form method="dialog" id="medicineForm" class="modal-form"><div class="modal-head"><h3>Add medicine to inventory</h3><button class="x" value="cancel">×</button></div><div class="form-grid"><div class="field"><label>Medicine name *</label><input name="name" required></div><div class="field"><label>Category</label><select name="category"><option>Tablet</option><option>Capsule</option><option>Syrup</option><option>Injection</option><option>Ointment</option><option>Other</option></select></div><div class="field"><label>Batch number</label><input name="batch"></div><div class="field"><label>Quantity *</label><input name="qty" type="number" min="0" required></div><div class="field"><label>Expiry date *</label><input name="expiry" type="date" required></div><div class="field"><label>Reorder level</label><input name="reorder" type="number" min="0" value="10"></div><div class="field"><label>Purchase price (₹)</label><input name="cost" type="number" min="0" step=".01" value="0"></div><div class="field"><label>Sale price (₹) *</label><input name="price" type="number" min="0" step=".01" required></div><div class="field full-field"><label>Supplier name</label><input name="supplier"></div></div><button class="primary full" type="submit">Save medicine</button></form></dialog>
+
+  <dialog id="supplierModal"><form method="dialog" id="supplierForm" class="modal-form"><div class="modal-head"><h3>Add supplier quote</h3><button class="x" value="cancel">×</button></div><div class="form-grid"><div class="field"><label>Supplier name *</label><input name="name" required></div><div class="field"><label>Medicine / product *</label><input name="product" required></div><div class="field"><label>Quoted price (₹) *</label><input name="price" type="number" min="0" step=".01" required></div><div class="field"><label>Delivery days</label><input name="days" type="number" min="0" value="2"></div><div class="field"><label>Reliability (1–5)</label><select name="rating"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></div><div class="field"><label>Contact</label><input name="contact"></div></div><button class="primary full" type="submit">Save quote</button></form></dialog>
+
+  <dialog id="customerModal"><form method="dialog" id="customerForm" class="modal-form"><div class="modal-head"><h3>Add customer / delivery</h3><button class="x" value="cancel">×</button></div><div class="form-grid"><div class="field"><label>Customer name *</label><input name="name" required></div><div class="field"><label>Phone</label><input name="phone"></div><div class="field full-field"><label>Delivery address</label><textarea name="address" rows="2"></textarea></div><div class="field"><label>Delivery status</label><select name="status"><option>Pending</option><option>Preparing</option><option>Out for delivery</option><option>Delivered</option><option>Pickup</option></select></div></div><button class="primary full" type="submit">Save customer</button></form></dialog>
+
+
+  <dialog id="referenceModal"><form method="dialog" id="referenceForm" class="modal-form"><div class="modal-head"><h3>Add medicine information</h3><button class="x" value="cancel">×</button></div><div class="warning">Only add information checked against the exact product packaging or a trusted professional source. Do not enter patient-specific dosage advice.</div><div class="field"><label>Medicine / brand name *</label><input name="name" required></div><div class="field"><label>Common use / category</label><input name="use" placeholder="e.g. pain relief"></div><div class="field"><label>General information *</label><textarea name="info" rows="3" required></textarea></div><div class="field"><label>Important cautions</label><textarea name="caution" rows="2"></textarea></div><button class="primary full" type="submit">Save reference entry</button></form></dialog>
+  <div id="toast" class="toast"></div>
+  <script>window.MEDSTOCK_SUPABASE_URL="https://bgqvtyezqvtetgtzhngf.supabase.co";window.MEDSTOCK_SUPABASE_PUBLISHABLE_KEY="sb_publishable_lV_HkCtzUNMNfLBpzJgcrQ_lythwM14";</script>
+  <script src="app.js"></script>
+</body></html>
